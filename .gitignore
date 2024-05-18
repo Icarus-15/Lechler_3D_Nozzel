@@ -1,0 +1,5 @@
+# Ignore a specific Python file
+lqdist_archit.py
+
+# Ignore a directory
+Callibs/
