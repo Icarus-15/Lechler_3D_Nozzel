@@ -23,7 +23,7 @@ from scipy.optimize import curve_fit
 #Read camera calibration file
 
 def read_cam_calibration(): 
-    with open("cal_mat.yaml", "r") as f:
+    with open("Callibs/calibration_matrix_46.yaml", "r") as f:
         read_data = yaml.load(f, Loader=yaml.FullLoader)
         camera_matrix = np.array(read_data['camera_matrix'])
         distortion_coefficients = np.array(read_data['dist_coeff'])

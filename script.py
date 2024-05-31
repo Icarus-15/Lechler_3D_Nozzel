@@ -2,37 +2,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
 import plotly.graph_objects as go
+import plotly.express as px
 
 df_33 = pd.read_excel("/Users/sarthakmishra/Documents/Code/Lechler_3D_Nozzel/results/33.xlsx")
 df_111 = pd.read_excel("/Users/sarthakmishra/Documents/Code/Lechler_3D_Nozzel/results/111.xlsx")
 num_of_distributions = 20 # Number of distributions to plot
 
 def csv_to_discrete_distribution(num_of_distributions, df, colorscale='Jet'):
-    # Step 2: Add a y-axis value for each distribution
-    df['y'] = np.repeat(np.arange(1, num_of_distributions+1), len(df)//num_of_distributions)
-
-    # Step 3: Plot the data on a 3D graph using Plotly
-    fig = go.Figure(data=[go.Scatter3d(
-    x=df['xpos'],
-    y=df['y'],
-    z=df['level'],
-    mode='markers',
-    marker=dict(
-        size=3,
-        color=df['level'],  # set color to an array/list of desired values
-        colorscale=colorscale,   # choose a colorscale
-        opacity=0.8
+    # Step 1: Duplicate df_111 num_of_distributions times
+    df_duplicated = pd.concat([df]*num_of_distributions, ignore_index=True)
+    
+    df_duplicated['y'] = np.repeat(np.arange(1, num_of_distributions+1), len(df))
+    
+    # Create a scatter plot
+    scatter = go.Scatter3d(
+        x=df_duplicated['xpos'],
+        y=df_duplicated['y'],
+        z=df_duplicated['level'],
+        mode='markers',
+        marker=dict(
+            size=6,
+            color=df_duplicated['level'],
+            colorscale=colorscale,
+            showscale=True
+        )
     )
-    )])
-
-    # Set layout properties
-    fig.update_layout(scene = dict(
-                    xaxis_title='X',
-                    yaxis_title='Y',
-                    zaxis_title='Z'),
-                    width=700,
-                    margin=dict(r=20, b=10, l=10, t=10))
-
+    
+    # Create a figure and add the scatter plot
+    fig = go.Figure(data=[scatter])
+    
     return fig
     
 

@@ -1,4 +1,3 @@
-     # Draw a rectangle around the detected markers
-        for corner in corners:
-            int_corner = np.int0(corner)
-            frame = cv2.polylines(frame, [int_corner], True, (0, 255, 0), 2)
+# Save the frame with the maximum area after the video has been processed
+    if max_frame is not None:
+        cv2.imwrite(f'output_frames/max_area_frame_{os.path.splitext(filename)[0]}.png', max_frame)
