@@ -313,17 +313,65 @@ def find_islands():
     
     pass
 
-def find_balls(img_raw,img_undist):
+def find_balls(img_raw,img_undist,output_dir,filename):
     #++++++++++++++++++++++++++++++++
     #+ Find balls on the measuring track +
     #++++++++++++++++++++++++++++++++
     #We will use an averaging in the height instead of hough transform to find exact number of balls in the specific columns
     img_bw = img_raw.copy()
+    
     #print(img_bw.shape)
     kernel = np.array([[0,-2,0],
                        [-2,9,-2],
                        [0,-2,0]])
     img_bw = cv2.filter2D(img_bw,-1,kernel=kernel)
+    
+    # Initialize the detector parameters using default values
+    parameters = aruco.DetectorParameters()
+
+    # Define the dictionary that was used for the markers in the image
+    aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+    
+    # Detect the markers in the image
+    corners, ids, _ = aruco.detectMarkers(img_raw, aruco_dict, parameters=parameters)
+    
+    # Define the real-world size of the ArUco marker (in mm)
+    aruco_size_mm = 100  
+    
+    if len(corners):
+        # Flatten the ArUco IDs list
+        ids = ids.flatten()
+
+        # Loop over the detected ArUCo corners
+        for (markerCorner, markerID) in zip(corners, ids):
+            # Extract the marker corners
+            corners = markerCorner.reshape((4, 2))
+            (topLeft, topRight, bottomRight, bottomLeft) = corners
+
+            # Convert each of the (x, y)-coordinate pairs to integers
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+
+            # Calculate the length of the marker
+            aruco_length_horizontal_upper = np.abs(topRight[0] - topLeft[0])
+            aruco_length_horizontal_lower = np.abs(bottomRight[0] - bottomLeft[0])
+            aruco_length_vertical = (aruco_length_horizontal_upper + aruco_length_horizontal_lower)/2
+            
+            aruco_length_vertical_left = np.abs(topLeft[1] - bottomLeft[1])
+            aruco_length_vertical_right = np.abs(topRight[1] - bottomRight[1])
+            aruco_length_horizontal = (aruco_length_vertical_left + aruco_length_vertical_right)/2
+            
+            # Calculate the scale factor (real-world size / pixel size)
+            scale_factor_horizontal = aruco_size_mm / aruco_length_horizontal
+            scale_factor_vertical = aruco_size_mm / aruco_length_vertical
+            
+           
+
+           
+
+    
     ##### DEUBG MODE ####
     if PRODUCTION_MODE:
         no_of_cylinders = 75 #int(input("Enter the expexcted number of Cylinders"))
@@ -333,25 +381,29 @@ def find_balls(img_raw,img_undist):
         no_of_cylinders = 75
         each_cylinder_width_mm = 15
         each_cylinder_height_cm = 16.6
+        
+        # Calculate the real-world width and height of each cylinder
+        each_cylinder_width_mm = (aruco_length_horizontal / no_of_cylinders) * scale_factor_horizontal
+        each_cylinder_height_cm = aruco_length_vertical * scale_factor_vertical / 10  # convert mm to cm
     
     each_cylinder_width_pix = img_bw.shape[1]//no_of_cylinders
     
     edged = cv2.Canny(img_bw, 20, 140)
     if DEBUG_MODE:
         print("Edges of the markers")
-        plt.figure(figsize=(200,200))
+        plt.figure(figsize=(20,20))
         plt.imshow(cv2.cvtColor(edged, cv2.COLOR_GRAY2RGB))
         plt.axis('off')
-        plt.show()
+        #plt.show()
     
     # Calibration needed if new setup
     circles = cv2.HoughCircles(img_bw, cv2.HOUGH_GRADIENT, 1.1, minDist=each_cylinder_width_pix*3//4, param1=5, param2=6.5, minRadius = 3, maxRadius = 15)  
     if DEBUG_MODE:
         print("MArkers in black and white")
-        plt.figure(figsize=(200,200))
+        plt.figure(figsize=(20,20))
         plt.imshow(cv2.cvtColor(img_bw, cv2.COLOR_GRAY2RGB))
         plt.axis('off')
-        plt.show()
+        #plt.show()
     
     if circles is not None: 
         #Convert to integer, otherwise it won't loop.
@@ -363,10 +415,10 @@ def find_balls(img_raw,img_undist):
             cv2.circle(img_undist, (x, y), r, (255, 255, 0), 3)   
     if DEBUG_MODE:
         print("The circles drawn should be coinciding with the markers in the cropped out picture")
-        plt.figure(figsize=(200,200))
+        plt.figure(figsize=(20,20))
         plt.imshow(cv2.cvtColor(img_undist, cv2.COLOR_BGR2RGB))
         plt.axis('off')
-        plt.show()
+        #plt.show()
     
     if PRODUCTION_MODE:
         x_max_height_column=int(input("Enter the cylinder number of maximum height"))
@@ -462,11 +514,12 @@ def find_balls(img_raw,img_undist):
     plt.xlim([0, np.max(x_pos)])
     plt.ylim([0, np.max(y_height)+1])
     plt.grid()
-    # # plt.title('Liquid Distribution Measurement')
-    plt.title(title_full)
+    plt.title('Liquid Distribution Measurement')
+    #plt.title(title_full)
     plt.xlabel('Position in mm')
     plt.ylabel('Level in mm')
-    plt.show()
+    #plt.show()
+    plt.savefig('Liquid Distribution Measurement.png')
 
     if PRODUCTION_MODE:
         percent_deviation= int(input("Enter the percentage deviation threshold you want to see"))
@@ -485,10 +538,10 @@ def find_balls(img_raw,img_undist):
     # Divide the x position into whole 15mm increments
 
     # #Create DataFrame from lists
-    df = pd.DataFrame(list(zip(x_pos,y_height)), columns = ['xpos', 'level'])
+    df = pd.DataFrame(list(zip(x_pos,y_height)), columns = ['x', 'z'])
 
     # # Sort DataFrame in ascending order by position
-    df = df.sort_values(by=['xpos'])
+    df = df.sort_values(by=['x'])
     
     # # Scaling image for saving in excel
     img = img_undist.copy()
@@ -506,21 +559,22 @@ def find_balls(img_raw,img_undist):
     img = cv2.resize(img, None, fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_AREA)
 
     # Clean up duplicate entries for x position
-    df = df.drop_duplicates(['xpos'])
+    df = df.drop_duplicates(['x'])
     
     if PRODUCTION_MODE:
         filename = str(input('File name result file without extension:'))
-    if DEBUG_MODE:
-        filename = "111"
+    # if DEBUG_MODE:
+    #     filename = "111"
     
-    if filename == (""):
-        filename = 'FLV_' + product_no + '_' + pressure +'_bar_' + flowrate + '_lpm_' + nozz_height + '_mm'
-    else: 
-        filename = filename
-    filenamexlsx = './results/'+ filename + '.xlsx'
-    filenameimg = './results/'+ filename + '.png'
-    filenameimg_ext = './results/'+ filename + "_extracted" + '.png'
-    filenametxt = './results/' + filename + '.txt'
+    # if filename == (""):
+    #     filename = 'FLV_' + product_no + '_' + pressure +'_bar_' + flowrate + '_lpm_' + nozz_height + '_mm'
+    # else: 
+    #     filename = filename
+    filenamecsv = os.path.join(output_dir, filename + '.csv')
+    filenameimg = os.path.join(output_dir, filename + '.png')
+    filenameimg_ext = os.path.join(output_dir, filename + "_extracted" + '.png')
+    filenametxt = os.path.join(output_dir, filename + '.txt')
+
 
     plt.figure(figsize=(16, 4))
     plt.scatter(x_pos,y_height)
@@ -529,7 +583,8 @@ def find_balls(img_raw,img_undist):
     plt.ylim([0, np.max(y_height)+1])
     plt.grid()
     # # plt.title('Liquid Distribution Measurement')
-    plt.title(title_full)
+    #plt.title(title_full)
+    plt.title('Liquid Distribution Measurement')
     plt.xlabel('Position in mm')
     plt.ylabel('Level in mm')
     plt.axhline(y=mean_distr, color='r', linestyle='-')
@@ -537,22 +592,22 @@ def find_balls(img_raw,img_undist):
     plt.axhline(y=mean_distr*(1 - percent_deviation/100),color = 'b', linestyle='dotted')
     plt.savefig(filenameimg_ext)
     
-    try:
-        os.makedirs('./results')
-    except OSError:
-        pass
-    # Data Frame und Bild  in excel schreiben
-    writer = pd.ExcelWriter(filenamexlsx, engine='xlsxwriter')
-    df.to_excel(writer, sheet_name='Measurement')
-    plt.imsave(filenameimg, img)
-    workbook = writer.book
-    worksheet = writer.sheets['Measurement']
-    worksheet.insert_image('E3', filenameimg)
-    worksheet.insert_image('E10', filenameimg_ext)
-    # writer.write('Measurement','E19',"LOLOL")
-    writer.close()
     
-    print('File saved in subfolder ./results. Program ended.')
+    # Data Frame und Bild  in excel schreiben
+    # writer = pd.ExcelWriter(filenamexlsx, engine='xlsxwriter')
+    # df.to_excel(writer, sheet_name='Measurement')
+    # plt.imsave(filenameimg, img)
+    # workbook = writer.book
+    # worksheet = writer.sheets['Measurement']
+    # worksheet.insert_image('E3', filenameimg)
+    # worksheet.insert_image('E10', filenameimg_ext)
+    # # writer.write('Measurement','E19',"LOLOL")
+    # writer.close()
+    
+    # Save the DataFrame to a .csv file in the output_dir
+    df.to_csv(os.path.join(output_dir, 'output.csv'), index=False)
+    
+    print('Files saved in subfolder. Program ended.')
 
     # Creating txt file
     with open(filenametxt, 'w') as f:

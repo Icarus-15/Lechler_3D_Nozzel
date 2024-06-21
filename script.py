@@ -92,5 +92,3 @@ def csv_to_2D_Heatmap(df, colorscale='Jet'):
     return fig
 
 
-# Show the plot
-#fig.show()
