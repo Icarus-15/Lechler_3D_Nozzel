@@ -1,8 +1,9 @@
 # Ignore a specific Python file
-
+tempCodeRunnerFile.py   
 
 # Ignore a directory
 
 __pycache__
 results/
 Vids/
+*.mp4
