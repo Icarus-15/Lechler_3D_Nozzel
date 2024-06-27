@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/sarthakmishra/Documents/Code/Lechler_3D_Nozzel",
+      "program": "/Users/sarthakmishra/Documents/Code/Lechler_3D_Nozzel/build/Debug/outDebug"
+    }
+  ]
+}

@@ -2,8 +2,7 @@
 lqdist_archit.py
 
 # Ignore a directory
-Callibs/
-__pycache__/
-Archive/
+
+__pycache__
 results/
 Vids/

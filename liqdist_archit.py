@@ -313,7 +313,8 @@ def find_islands():
     
     pass
 
-def find_balls(img_raw,img_undist,output_dir,filename):
+
+def find_balls(img_raw,img_undist,output_dir,filename,count):
     #++++++++++++++++++++++++++++++++
     #+ Find balls on the measuring track +
     #++++++++++++++++++++++++++++++++
@@ -382,9 +383,9 @@ def find_balls(img_raw,img_undist,output_dir,filename):
         each_cylinder_width_mm = 15
         each_cylinder_height_cm = 16.6
         
-        # Calculate the real-world width and height of each cylinder
-        each_cylinder_width_mm = (aruco_length_horizontal / no_of_cylinders) * scale_factor_horizontal
-        each_cylinder_height_cm = aruco_length_vertical * scale_factor_vertical / 10  # convert mm to cm
+        # # Calculate the real-world width and height of each cylinder
+        # each_cylinder_width_mm = (aruco_length_horizontal / no_of_cylinders) * scale_factor_horizontal
+        # each_cylinder_height_cm = aruco_length_vertical * scale_factor_vertical / 10  # convert mm to cm
     
     each_cylinder_width_pix = img_bw.shape[1]//no_of_cylinders
     
@@ -604,6 +605,7 @@ def find_balls(img_raw,img_undist,output_dir,filename):
     # # writer.write('Measurement','E19',"LOLOL")
     # writer.close()
     
+    df['y'] = count
     # Save the DataFrame to a .csv file in the output_dir
     df.to_csv(os.path.join(output_dir, 'output.csv'), index=False)
     
