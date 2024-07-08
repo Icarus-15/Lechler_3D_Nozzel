@@ -12,7 +12,7 @@ import yaml
 import liqdist_archit as ld
 
 class ArUcoDetector:
-    def __init__(self, video_path, cooldown_time=8, output_dir="output_frames"):
+    def __init__(self, video_path, cooldown_time, output_dir="output_frames"):
         self.video_path = video_path
         self.vid = cv2.VideoCapture(video_path)
         self.cooldown_time = cooldown_time
@@ -44,7 +44,7 @@ class ArUcoDetector:
                 self.timestamps.append(timestamp / 1000)
                 self.areas.append(current_area)
 
-                if self.previous_area > self.previous_previous_area and self.previous_area > current_area and self.frame_counter >= self.cooldown_frames and self.previous_area > 250000:
+                if self.previous_area > self.previous_previous_area and self.previous_area > current_area and self.frame_counter >= self.cooldown_frames and self.previous_area > 260000:
                     self.max_frame = frame.copy()
                     print(f"Local max area found at {timestamp / 1000:.1f}s with area {self.previous_area:.1f} pixels")
                     self.save_frame(self.max_frame, self.frame_id)
@@ -217,6 +217,7 @@ class ImageProcessor:
                 plt.savefig(os.path.join(output_dir, "image_captured.png"))
 
             img_intrinsic = ld.intrinsic(capture, camera_matrix, distortion_coefficients)
+            img_intrinsic = capture
 
             if self.DEBUG_MODE:
                 print("Image after Undistortion")
@@ -248,14 +249,14 @@ class ImageProcessor:
                 plt.axis('off')
                 plt.savefig(os.path.join(output_dir, "image_morphed.png"))
 
-            balls_found = ld.find_balls(img_raw, img_cr, output_dir, filename, count=filename[-1])
+            balls_found = ld.find_balls(img_raw, img_cr, output_dir, filename, count=filename[-2])
 
             cv2.imwrite(os.path.join(output_dir, "balls_found.png"), balls_found)
 
 if __name__ == "__main__":
-    filename = "VidTest2.mp4"
-    # detector = ArUcoDetector(f'Vids/{filename}', cooldown_time=8)
-    # detector.detect_aruco_closest_frame()
+    filename = "../Vids/sop6.mp4"
+    detector = ArUcoDetector(f'Vids/{filename}', cooldown_time=20)
+    detector.detect_aruco_closest_frame()
     
     image_processor = ImageProcessor(DEBUG_MODE=True)
     image_processor.process_images()

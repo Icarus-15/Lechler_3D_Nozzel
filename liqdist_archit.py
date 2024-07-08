@@ -23,10 +23,11 @@ from scipy.optimize import curve_fit
 #Read camera calibration file
 
 def read_cam_calibration(): 
-    with open("Callibs/calibration_matrix_46.yaml", "r") as f:
+    with open("Callibs/callibration.yaml", "r") as f:
         read_data = yaml.load(f, Loader=yaml.FullLoader)
         camera_matrix = np.array(read_data['camera_matrix'])
         distortion_coefficients = np.array(read_data['dist_coeff'])
+        print('read succesfully')
         return(camera_matrix, distortion_coefficients)
 
 ################################################### ##########################
@@ -444,7 +445,12 @@ def find_balls(img_raw,img_undist,output_dir,filename,count):
         print("The y pixels: ",y_pixel_coord)
         print(temp_min_arg)
     for i in range(len(y_pixel_coord)):
-        y_height[i+x_max_height_column-temp_min_arg-1] = y_pixel_coord[i]
+        # Calculate the index first
+        index = i + x_max_height_column - temp_min_arg - 1
+
+        # Check if the index is within the valid range before accessing the array
+        if 5 <= index < len(y_height):
+            y_height[index] = y_pixel_coord[i]
     
     print(np.argmin(y_height))
     

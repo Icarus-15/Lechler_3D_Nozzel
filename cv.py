@@ -24,8 +24,8 @@ import numpy as np
 from cv2 import aruco
 
 # Example usage
-filename = "sop4.mp4"
-vid = cv2.VideoCapture(f'Vids/{filename}')
+filename = "sop6.mp4"
+vid = cv2.VideoCapture(f'../Vids/{filename}')
 
 def detect_aruco_closest_frame(vid, output_dir="output_frames", cooldown_time=5):
     max_area = 0
@@ -262,6 +262,9 @@ def combine_csv_files(dir_name):
 
     # Concatenate the DataFrames
     combined_df = pd.concat(dfs, ignore_index=True)
+    combined_df.to_csv('combined_green_balls.csv', index=False)
+    
+    
 
     return combined_df
 
@@ -332,6 +335,7 @@ def process_images(PRODUCTION_MODE=False, DEBUG_MODE=True):
     import liqdist_archit as ld
     from liqdist_archit import detect_arucos
     import os
+
 
     ld.DEBUG_MODE      = DEBUG_MODE
     ld.PRODUCTION_MODE = PRODUCTION_MODE
@@ -505,85 +509,141 @@ def visualize_nozzle_distribution_3d(df, interpolation_method='cubic', colorscal
 
 
 
+
 #### Set System Mode
-PRODUCTION_MODE = False
-DEBUG_MODE = True
+# PRODUCTION_MODE = False
+# DEBUG_MODE = True
 
 
-ld.DEBUG_MODE      = DEBUG_MODE
-ld.PRODUCTION_MODE = PRODUCTION_MODE
+# ld.DEBUG_MODE      = DEBUG_MODE
+# ld.PRODUCTION_MODE = PRODUCTION_MODE
 
-if DEBUG_MODE:
-    import matplotlib.pyplot as plt
-    print("You are in debugging mode.")
-    print("Multiple input streams are not supported")
-    print("There will be lots of intermediate steps being printed out")
+# if DEBUG_MODE:
+#     import matplotlib.pyplot as plt
+#     print("You are in debugging mode.")
+#     print("Multiple input streams are not supported")
+#     print("There will be lots of intermediate steps being printed out")
 
-# Get a list of all the images in the output frames folder
-image_files = os.listdir("output_frames")
-counter = 1 
+# # Get a list of all the images in the output frames folder
+# image_files = os.listdir("output_frames")
+# counter = 1 
 
-for image_file in image_files:
-    # Create a new directory for the intermediate outputs of this image
-    filename = os.path.splitext(image_file)[0] 
-    # Create a new directory for the intermediate outputs of this image
-    output_dir = os.path.join("intermediate_outputs", filename)
-    os.makedirs(output_dir, exist_ok=True)
+# for image_file in image_files:
+#     # Create a new directory for the intermediate outputs of this image
+#     filename = os.path.splitext(image_file)[0] 
+#     # Create a new directory for the intermediate outputs of this image
+#     output_dir = os.path.join("intermediate_outputs", filename)
+#     os.makedirs(output_dir, exist_ok=True)
 
-    # Read the image
-    capture = cv2.imread(os.path.join("output_frames", image_file))
+#     # Read the image
+#     capture = cv2.imread(os.path.join("output_frames", image_file))
 
-    #capture, selector = ld.select_ipcamera()
-    camera_matrix, distortion_coefficients = ld.read_cam_calibration()
+#     #capture, selector = ld.select_ipcamera()
+#     camera_matrix, distortion_coefficients = ld.read_cam_calibration()
 
-    if DEBUG_MODE:
-        print("Image captured")
-        plt.figure(figsize=(10,10))
-        plt.imshow(cv2.cvtColor(capture, cv2.COLOR_BGR2RGB))
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, "image_captured.png"))
+#     if DEBUG_MODE:
+#         print("Image captured")
+#         plt.figure(figsize=(10,10))
+#         plt.imshow(cv2.cvtColor(capture, cv2.COLOR_BGR2RGB))
+#         plt.axis('off')
+#         plt.savefig(os.path.join(output_dir, "image_captured.png"))
 
-    img_intrinsic = ld.intrinsic(capture,camera_matrix,distortion_coefficients)
+#     img_intrinsic = ld.intrinsic(capture,camera_matrix,distortion_coefficients)
 
-    img_intrinsic = capture
-    if DEBUG_MODE:
-        print("Image after Undistortion")
-        plt.figure(figsize=(10,10))
-        plt.imshow(cv2.cvtColor(img_intrinsic, cv2.COLOR_BGR2RGB))
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, "image_after_undistortion.png"))
+#     img_intrinsic = capture
+#     if DEBUG_MODE:
+#         print("Image after Undistortion")
+#         plt.figure(figsize=(10,10))
+#         plt.imshow(cv2.cvtColor(img_intrinsic, cv2.COLOR_BGR2RGB))
+#         plt.axis('off')
+#         plt.savefig(os.path.join(output_dir, "image_after_undistortion.png"))
 
-    arucoFound = ld.detect_arucos(capture,camera_matrix,distortion_coefficients)
-    if DEBUG_MODE:
-        if arucoFound is not None:
-            print("No of Aruco found: ",len(arucoFound))
-        print("Normal image expects 4 aruco detections and live camera for some reason needs 8")
-        print("The detected arucos are: ",arucoFound)
+#     arucoFound = ld.detect_arucos(capture,camera_matrix,distortion_coefficients)
+#     if DEBUG_MODE:
+#         if arucoFound is not None:
+#             print("No of Aruco found: ",len(arucoFound))
+#         print("Normal image expects 4 aruco detections and live camera for some reason needs 8")
+#         print("The detected arucos are: ",arucoFound)
 
-    img_cr = ld.crop_image(img_intrinsic,arucoFound)
-    if DEBUG_MODE:
-        print("Cropped Images")
-        plt.figure(figsize=(10,10))
-        plt.imshow(cv2.cvtColor(img_cr, cv2.COLOR_BGR2RGB))
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, "cropped_image.png"))
+#     img_cr = ld.crop_image(img_intrinsic,arucoFound)
+#     if DEBUG_MODE:
+#         print("Cropped Images")
+#         plt.figure(figsize=(10,10))
+#         plt.imshow(cv2.cvtColor(img_cr, cv2.COLOR_BGR2RGB))
+#         plt.axis('off')
+#         plt.savefig(os.path.join(output_dir, "cropped_image.png"))
 
-    img_raw = ld.morphologic(img_cr)
-    if DEBUG_MODE:
-        print("Image Morphed")
-        plt.figure(figsize=(10,10))
-        plt.imshow(img_raw)
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, "image_morphed.png"))
+#     img_raw = ld.morphologic(img_cr)
+#     if DEBUG_MODE:
+#         print("Image Morphed")
+#         plt.figure(figsize=(10,10))
+#         plt.imshow(img_raw)
+#         plt.axis('off')
+#         plt.savefig(os.path.join(output_dir, "image_morphed.png"))
     
-    balls_found = ld.find_balls(img_raw, img_cr, output_dir,filename,count = filename[-1])
+#     count_id = filename.split("_")[-1].split(".")[0]
+#     # Pass the count id to the find_balls function
+#     balls_found = ld.find_balls(img_raw, img_cr, output_dir, filename, count=count_id)
 
 
-    # Save the final output
-    cv2.imwrite(os.path.join(output_dir, "balls_found.png"), balls_found)
+#     # Save the final output
+#     cv2.imwrite(os.path.join(output_dir, "balls_found.png"), balls_found)
     
-    
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from scipy.interpolate import griddata
+
+# Load the data
+df = pd.read_csv('combined_green_balls.csv')
+
+# Define the threshold for z values
+z_threshold = df['z'].mean()  # For example, using the mean of z values as the threshold
+
+# Filter the DataFrame to include only rows where z is above the threshold
+df_filtered = df[df['z'] > z_threshold]
+
+# Define the interpolation method and colorscale
+interpolation_method = 'cubic'
+colorscale = 'Viridis'
+
+# Create a grid for interpolation
+xi = np.linspace(df_filtered['x'].min(), df_filtered['x'].max(), 100)
+yi = np.linspace(df_filtered['y'].min(), df_filtered['y'].max(), 100)
+xi, yi = np.meshgrid(xi, yi)
+
+# Interpolate the water level for the 3D surface using the filtered DataFrame
+water_level_surface = griddata(
+    (df_filtered['x'], df_filtered['y']), 
+    df_filtered['z'],
+    (xi, yi),
+    method=interpolation_method
+)
+
+# Create the 3D surface plot
+fig = go.Figure(data=[go.Surface(
+    x=xi, y=yi, z=water_level_surface,
+    colorscale=colorscale,
+    colorbar=dict(title='Water Level')
+)])
+
+# Update layout
+fig.update_layout(
+    title="Full Cone Nozzle Water Level Distribution Above Threshold",
+    scene=dict(
+        xaxis_title='X',
+        yaxis_title='Y',
+        zaxis_title='Water Level',
+        camera=dict(eye=dict(x=1.5, y=1.5, z=1.2))
+    ),
+    width=800,
+    height=800,
+)
+
+# Show the plot
+fig.show()
 # For the 3D distribution
 #plot_3d = visualize_nozzle_distribution_3d(combine_csv_files(dir_name='intermediate_outputs'))
-plot_3d = visualize_3D_distribution(combine_csv_files(dir_name='intermediate_outputs')) 
-plot_3d.show()
+# plot_3d = visualize_3D_distribution(combine_csv_files(dir_name='intermediate_outputs')) 
+# plot_3d.show()
