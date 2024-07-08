@@ -602,7 +602,7 @@ df = pd.read_csv('combined_green_balls.csv')
 z_threshold = df['z'].min()  
 # Filter the DataFrame to include only rows where z is above the threshold
 df_filtered = df[df['z'] > z_threshold]
-df_filtered = df_filtered - df_filtered.min()  
+df_filtered = df_filtered - df_filtered.min()  # Shift the data to start from 0
 
 # Define the interpolation method and colorscale
 interpolation_method = 'cubic'

@@ -143,11 +143,19 @@ class CSVCombiner:
 
 class Visualizer:
     @staticmethod
-    def visualize_nozzle_distribution_3d(df, interpolation_method='nearest', colorscale='Viridis'):
-        xi, yi = Visualizer.create_grid(df)
-        water_level_surface = Visualizer.interpolate_water_level(df, xi, yi, interpolation_method)
+    def visualize_nozzle_distribution_3d(df, interpolation_method='cubic', colorscale='Viridis'):
+        df_filtered = Visualizer.filter_and_shift_data(df)
+        xi, yi = Visualizer.create_grid(df_filtered)
+        water_level_surface = Visualizer.interpolate_water_level(df_filtered, xi, yi, interpolation_method)
         fig = Visualizer.create_3d_surface_plot(xi, yi, water_level_surface, colorscale)
         return fig
+
+    @staticmethod
+    def filter_and_shift_data(df):
+        z_threshold = df['z'].min()
+        df_filtered = df[df['z'] > z_threshold]
+        df_filtered = df_filtered - df_filtered.min()  # Shift the data to start from 0
+        return df_filtered
 
     @staticmethod
     def create_grid(df):
@@ -172,7 +180,7 @@ class Visualizer:
             colorbar=dict(title='Water Level')
         )])
         fig.update_layout(
-            title="Full Cone Nozzle Water Level Distribution",
+            title="Full Cone Nozzle Water Level Distribution Above Threshold",
             scene=dict(
                 xaxis_title='X',
                 yaxis_title='Y',
@@ -186,8 +194,9 @@ class Visualizer:
 
     @staticmethod
     def csv_to_2D_Heatmap(df, colorscale='Jet'):
-        Z = Visualizer.scale_z_values(df)
-        x, y, Z = Visualizer.prepare_heatmap_data(df, Z)
+        df_filtered = Visualizer.filter_and_shift_data(df)
+        Z = Visualizer.scale_z_values(df_filtered)
+        x, y, Z = Visualizer.prepare_heatmap_data(df_filtered, Z)
         fig = Visualizer.create_heatmap(x, y, Z, colorscale)
         return fig
 
@@ -209,11 +218,12 @@ class Visualizer:
         contour = go.Contour(x=x, y=y, z=Z, colorscale=colorscale)
         fig = go.Figure(data=[contour])
         fig.update_layout(
-            title='Heatmap of Z values',
+            title='Heatmap of Z values Above Threshold',
             xaxis_title='X',
             yaxis_title='Y'
         )
         return fig
+
 
 class ImageProcessor:
     def __init__(self, config):
