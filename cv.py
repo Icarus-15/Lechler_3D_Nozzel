@@ -590,19 +590,33 @@ def visualize_nozzle_distribution_3d(df, interpolation_method='cubic', colorscal
 #     cv2.imwrite(os.path.join(output_dir, "balls_found.png"), balls_found)
     
 
-import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+import numpy as np
+import plotly.graph_objs as go
 from scipy.interpolate import griddata
+
+def filter_and_shift_data(df):
+    # Step 1: Group by y values and find the minimum z for each group
+    min_z_per_y = df.groupby('y')['z'].min()
+
+    # Step 2: Filter out z values below the threshold for each y
+    df_filtered = pd.DataFrame()
+    for y_value, group in df.groupby('y'):
+        threshold = min_z_per_y[y_value]
+        filtered_group = group[group['z'] > threshold]
+        df_filtered = pd.concat([df_filtered, filtered_group])
+
+    # Step 3: Subtract the minimum z for each y value
+    for y_value, group in df_filtered.groupby('y'):
+        df_filtered.loc[group.index, 'z'] -= min_z_per_y[y_value]
+
+    return df_filtered
 
 # Load the data
 df = pd.read_csv('combined_green_balls.csv')
 
-# Define the threshold for z values
-z_threshold = df['z'].min()  
-# Filter the DataFrame to include only rows where z is above the threshold
-df_filtered = df[df['z'] > z_threshold]
-df_filtered = df_filtered - df_filtered.min()  # Shift the data to start from 0
+# Apply the filter_and_shift_data function
+df_filtered = filter_and_shift_data(df)
 
 # Define the interpolation method and colorscale
 interpolation_method = 'cubic'
@@ -643,6 +657,7 @@ fig.update_layout(
 
 # Show the plot
 fig.show()
+
 # For the 3D distribution
 #plot_3d = visualize_nozzle_distribution_3d(combine_csv_files(dir_name='intermediate_outputs'))
 # plot_3d = visualize_3D_distribution(combine_csv_files(dir_name='intermediate_outputs')) 

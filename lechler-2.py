@@ -152,14 +152,19 @@ class Visualizer:
 
     @staticmethod
     def filter_and_shift_data(df):
-        # Group by y values and find the minimum z for each group
+        # Step 1: Group by y values and find the minimum z for each group
         min_z_per_y = df.groupby('y')['z'].min()
 
-        # Filter out z values below the threshold for each y
-        df_filtered = df[df.apply(lambda row: row['z'] > min_z_per_y[row['y']], axis=1)]
+        # Step 2: Filter out z values below the threshold for each y
+        df_filtered = pd.DataFrame()
+        for y_value, group in df.groupby('y'):
+            threshold = min_z_per_y[y_value]
+            filtered_group = group[group['z'] > threshold]
+            df_filtered = pd.concat([df_filtered, filtered_group])
 
-        # Subtract the minimum z for each y value
-        df_filtered['z'] = df_filtered.apply(lambda row: row['z'] - min_z_per_y[row['y']], axis=1)
+        # Step 3: Subtract the minimum z for each y value
+        for y_value, group in df_filtered.groupby('y'):
+            df_filtered.loc[group.index, 'z'] -= min_z_per_y[y_value]
 
         return df_filtered
 
@@ -281,8 +286,9 @@ class ImageProcessor:
         img_raw = ld.morphologic(img_cr)
         if self.config.DEBUG_MODE:
             self.save_debug_image(img_raw, output_dir, "image_morphed.png", is_gray=True)
-
-        balls_found = ld.find_balls(img_raw, img_cr, output_dir, filename, count=filename[-2])
+        
+        count_id = filename.split("_")[-1].split(".")[0]
+        balls_found = ld.find_balls(img_raw, img_cr, output_dir, filename, count=count_id)
 
         if self.config.DEBUG_MODE:
             cv2.imwrite(os.path.join(output_dir, "balls_found.png"), balls_found)
@@ -325,4 +331,4 @@ def main(filename, debug_mode=True):
     # fig_heatmap.show()
 
 if __name__ == "__main__":
-    main(filename="../Vids/sop6.mp4", debug_mode=True)
+    main(filename="../Vids/sop_5_1.mp4", debug_mode=True)
