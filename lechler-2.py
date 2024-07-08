@@ -152,10 +152,17 @@ class Visualizer:
 
     @staticmethod
     def filter_and_shift_data(df):
-        z_threshold = df['z'].min()
-        df_filtered = df[df['z'] > z_threshold]
-        df_filtered = df_filtered - df_filtered.min()  # Shift the data to start from 0
+        # Group by y values and find the minimum z for each group
+        min_z_per_y = df.groupby('y')['z'].min()
+
+        # Filter out z values below the threshold for each y
+        df_filtered = df[df.apply(lambda row: row['z'] > min_z_per_y[row['y']], axis=1)]
+
+        # Subtract the minimum z for each y value
+        df_filtered['z'] = df_filtered.apply(lambda row: row['z'] - min_z_per_y[row['y']], axis=1)
+
         return df_filtered
+
 
     @staticmethod
     def create_grid(df):
