@@ -599,10 +599,10 @@ from scipy.interpolate import griddata
 df = pd.read_csv('combined_green_balls.csv')
 
 # Define the threshold for z values
-z_threshold = df['z'].mean()  # For example, using the mean of z values as the threshold
-
+z_threshold = df['z'].min()  
 # Filter the DataFrame to include only rows where z is above the threshold
 df_filtered = df[df['z'] > z_threshold]
+df_filtered = df_filtered - df_filtered.min()  
 
 # Define the interpolation method and colorscale
 interpolation_method = 'cubic'
