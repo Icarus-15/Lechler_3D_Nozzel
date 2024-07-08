@@ -313,7 +313,7 @@ class ImageProcessor:
 def main(filename, debug_mode=True):
     config = Config(debug_mode=debug_mode)
     
-    detector = ArUcoDetector(f'Vids/{filename}', cooldown_time=20, config=config)
+    detector = ArUcoDetector(f'{filename}', cooldown_time=20, config=config)
     detector.detect_aruco_closest_frame()
     
     image_processor = ImageProcessor(config)
@@ -331,4 +331,4 @@ def main(filename, debug_mode=True):
     # fig_heatmap.show()
 
 if __name__ == "__main__":
-    main(filename="../Vids/sop_5_1.mp4", debug_mode=True)
+    main(filename="../Vids/sop5_1.mp4", debug_mode=True)
